@@ -1,0 +1,21 @@
+{
+    "name": "project-name",
+    "version": "0.0.0",
+    "author": "António Ramadas",
+    "license": "MIT",
+    "description": "",
+    "keywords": [],
+    "homepage": "",
+    "repository": "github:antonio-ramadas/INSERT_HERE_REPOSITORY_NAME",
+    "scripts": {
+        "start": "echo 'Missing start script'",
+        "lint": "node_modules/.bin/eslint .",
+        "postinstall": "chmod +x postinstall.sh && sh postinstall.sh"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "eslint": "^5.6.1",
+        "eslint-config-airbnb-base": "^13.1.0",
+        "eslint-plugin-import": "^2.14.0"
+    }
+}
