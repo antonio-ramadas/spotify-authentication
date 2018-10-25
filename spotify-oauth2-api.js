@@ -1,17 +1,10 @@
 const { URL } = require('url');
 const https = require('https');
+const qs = require('querystring');
 
-function addIfDefined(url, key, value) {
-    if (value) {
-        url.searchParams.append(key, value);
-    }
-}
-
-function getTokenRequest(spotifyObj, customizeURL) {
+function getTokenRequest(spotifyObj, body) {
     return new Promise((resolve, reject) => {
         const url = new URL(`${spotifyObj.host}/api/token`);
-
-        customizeURL(url);
 
         const options = {
             host: url.host,
@@ -27,15 +20,19 @@ function getTokenRequest(spotifyObj, customizeURL) {
         }
 
         const request = https.request(options, (res) => {
-            let data = '';
+            const chunks = [];
 
-            res.on('data', (chunk) => { data += chunk; });
+            res.on('data', chunk => chunks.push(chunk));
 
-            res.on('end', () => resolve(JSON.parse(data)));
+            res.on('end', () => {
+                const response = Buffer.concat(chunks);
+                resolve(JSON.parse(response.toString()));
+            });
         });
 
         request.on('error', reject);
 
+        request.write(qs.stringify(body));
         request.end();
     });
 }
@@ -46,7 +43,7 @@ class SpotifyOAuth2 {
     }
 
     setHost(host) {
-        this.host = host;
+        this.host = new URL(host).origin;
     }
 
     setKeys(clientId, clientSecret) {
@@ -55,7 +52,7 @@ class SpotifyOAuth2 {
     }
 
     setRedirectUri(redirectUri) {
-        this.redirectUri = redirectUri;
+        this.redirectUri = new URL(redirectUri).href;
     }
 
     setRefreshToken(token) {
@@ -65,35 +62,51 @@ class SpotifyOAuth2 {
     createAuthorizeURL(scope, state, showDialog) {
         const url = new URL(`${this.host}/authorize`);
 
+        /* eslint-disable func-names */
+        // A lambda would be nicer, but it would be lost the proper scope to use `this`
+        url.addIfDefined = function (key, value) {
+            if (value) {
+                this.searchParams.append(key, value);
+            }
+        };
+        /* eslint-enable func-names */
+
         // Mandatory parameters
-        addIfDefined(url, 'client_id', this.clientId);
+        url.addIfDefined('client_id', this.clientId);
         url.searchParams.append('response_type', 'code');
-        addIfDefined(url, 'redirect_uri', this.redirectUri);
+        url.addIfDefined('redirect_uri', this.redirectUri);
 
         // Optional parameters
-        addIfDefined(url, 'state', state);
-        addIfDefined(url, 'scope', scope);
+        url.addIfDefined('state', state);
+        url.addIfDefined('scope', scope);
         // Spotify defaults `show_dialog` to `false`
-        addIfDefined(url, 'show_dialog', showDialog);
+        url.addIfDefined('show_dialog', showDialog);
 
         return url;
     }
 
     authorizationCodeGrant(code) {
-        return getTokenRequest(this, (url) => {
-            // Mandatory parameters
-            url.searchParams.append('code', code);
-            url.searchParams.append('grant_type', 'authorization_code');
-            addIfDefined(url, 'redirect_uri', this.redirectUri);
-        });
+        const body = {};
+
+        // Mandatory parameters
+        body.code = code;
+        body.grant_type = 'authorization_code';
+
+        if (this.redirectUri) {
+            body.redirect_uri = this.redirectUri;
+        }
+
+        return getTokenRequest(this, body);
     }
 
     refreshAccessToken() {
-        return getTokenRequest(this, (url) => {
-            // Mandatory parameters
-            url.searchParams.append('refresh_token', this.refreshToken);
-            url.searchParams.append('grant_type', 'refresh_token');
-        });
+        const body = {};
+
+        // Mandatory parameters
+        body.refresh_token = this.refreshToken;
+        body.grant_type = 'refresh_token';
+
+        return getTokenRequest(this, body);
     }
 }
 
