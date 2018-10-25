@@ -7,6 +7,39 @@ function addIfDefined(url, key, value) {
     }
 }
 
+function getTokenRequest(spotifyObj, customizeURL) {
+    return new Promise((resolve, reject) => {
+        const url = new URL(`${spotifyObj.host}/api/token`);
+
+        customizeURL(url);
+
+        const options = {
+            host: url.host,
+            path: url.pathname + url.search,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        };
+
+        if (spotifyObj.clientId && spotifyObj.clientSecret) {
+            options.auth = `${spotifyObj.clientId}:${spotifyObj.clientSecret}`;
+        }
+
+        const request = https.request(options, (res) => {
+            let data = '';
+
+            res.on('data', (chunk) => { data += chunk; });
+
+            res.on('end', () => resolve(JSON.parse(data)));
+        });
+
+        request.on('error', reject);
+
+        request.end();
+    });
+}
+
 class SpotifyOAuth2 {
     constructor() {
         this.setHost('https://accounts.spotify.com');
@@ -23,6 +56,10 @@ class SpotifyOAuth2 {
 
     setRedirectUri(redirectUri) {
         this.redirectUri = redirectUri;
+    }
+
+    setRefreshToken(token) {
+        this.refreshToken = token;
     }
 
     createAuthorizeURL(scope, state, showDialog) {
@@ -43,35 +80,19 @@ class SpotifyOAuth2 {
     }
 
     authorizationCodeGrant(code) {
-        return new Promise((resolve, reject) => {
-            const url = new URL(`${this.host}/api/token`);
-
+        return getTokenRequest(this, (url) => {
             // Mandatory parameters
             url.searchParams.append('code', code);
             url.searchParams.append('grant_type', 'authorization_code');
             addIfDefined(url, 'redirect_uri', this.redirectUri);
+        });
+    }
 
-            const options = {
-                host: url.host,
-                path: url.pathname + url.search,
-                method: 'POST',
-                auth: `${this.clientId}:${this.clientSecret}`,
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-            };
-
-            const request = https.request(options, (res) => {
-                let data = '';
-
-                res.on('data', (chunk) => { data += chunk; });
-
-                res.on('end', () => resolve(JSON.parse(data)));
-            });
-
-            request.on('error', reject);
-
-            request.end();
+    refreshAccessToken() {
+        return getTokenRequest(this, (url) => {
+            // Mandatory parameters
+            url.searchParams.append('refresh_token', this.refreshToken);
+            url.searchParams.append('grant_type', 'refresh_token');
         });
     }
 }
