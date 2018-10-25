@@ -1,4 +1,11 @@
 const { URL } = require('url');
+const https = require('https');
+
+function addIfDefined(url, key, value) {
+    if (value) {
+        url.searchParams.append(key, value);
+    }
+}
 
 class SpotifyOAuth2 {
     constructor() {
@@ -21,27 +28,51 @@ class SpotifyOAuth2 {
     createAuthorizeURL(scope, state, showDialog) {
         const url = new URL(`${this.host}/authorize`);
 
-        /* eslint-disable func-names */
-        // A lambda would be nicer, but it would be lost the proper scope to use `this`
-        url.addIfDefined = function (key, value) {
-            if (value) {
-                this.searchParams.append(key, value);
-            }
-        };
-        /* eslint-enable func-names */
-
         // Mandatory parameters
-        url.addIfDefined('client_id', this.clientId);
+        addIfDefined(url, 'client_id', this.clientId);
         url.searchParams.append('response_type', 'code');
-        url.addIfDefined('redirect_uri', this.redirectUri);
+        addIfDefined(url, 'redirect_uri', this.redirectUri);
 
         // Optional parameters
-        url.addIfDefined('state', state);
-        url.addIfDefined('scope', scope);
+        addIfDefined(url, 'state', state);
+        addIfDefined(url, 'scope', scope);
         // Spotify defaults `show_dialog` to `false`
-        url.addIfDefined('show_dialog', showDialog);
+        addIfDefined(url, 'show_dialog', showDialog);
 
         return url;
+    }
+
+    authorizationCodeGrant(code) {
+        return new Promise((resolve, reject) => {
+            const url = new URL(`${this.host}/api/token`);
+
+            // Mandatory parameters
+            url.searchParams.append('code', code);
+            url.searchParams.append('grant_type', 'authorization_code');
+            addIfDefined(url, 'redirect_uri', this.redirectUri);
+
+            const options = {
+                host: url.host,
+                path: url.pathname + url.search,
+                method: 'POST',
+                auth: `${this.clientId}:${this.clientSecret}`,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+            };
+
+            const request = https.request(options, (res) => {
+                let data = '';
+
+                res.on('data', (chunk) => { data += chunk; });
+
+                res.on('end', () => resolve(JSON.parse(data)));
+            });
+
+            request.on('error', reject);
+
+            request.end();
+        });
     }
 }
 
