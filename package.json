@@ -1,14 +1,18 @@
 {
-    "name": "project-name",
-    "version": "0.0.0",
+    "name": "spotify-authentication",
+    "version": "0.1.0",
     "author": "António Ramadas",
     "license": "MIT",
-    "description": "",
-    "keywords": [],
-    "homepage": "",
-    "repository": "github:antonio-ramadas/INSERT_HERE_REPOSITORY_NAME",
+    "description": "npm package to do the Authorization Code Flow with the Spotify API",
+    "keywords": [
+        "spotify",
+        "authentication",
+        "oauth2"
+    ],
+    "homepage": "https://github.com/antonio-ramadas/spotify-authentication",
+    "repository": "github:antonio-ramadas/spotify-authentication",
+    "main": "spotify-authentication.js",
     "scripts": {
-        "start": "echo 'Missing start script'",
         "lint": "node_modules/.bin/eslint .",
         "postinstall": "chmod +x postinstall.sh && sh postinstall.sh"
     },
