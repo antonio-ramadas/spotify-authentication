@@ -25,8 +25,15 @@ function getTokenRequest(spotifyObj, body) {
             res.on('data', chunk => chunks.push(chunk));
 
             res.on('end', () => {
-                const response = Buffer.concat(chunks);
-                resolve(JSON.parse(response.toString()));
+                const response = JSON.parse(Buffer.concat(chunks).toString());
+
+                let f = resolve;
+
+                if (response.error) {
+                    f = reject;
+                }
+
+                f(response);
             });
         });
 
