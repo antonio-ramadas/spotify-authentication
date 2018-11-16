@@ -33,12 +33,13 @@ spotifyAuthentication.createAuthorizeURL('scope', 'state', true || 'showDialog')
 spotifyAuthentication.authorizationCodeGrant('code obtained from the Spotify API from the previous interaction')
     .then(console.log, console.error);
 
+// Returns a promise which resolves to the response from the Spotify API
+spotifyAuthentication.refreshAccessToken('my-refresh-token')
+    .then(console.log, console.error);
+
 // Set the refresh token (it is undefined before this call)
 spotifyAuthentication.setRefreshToken('my-refresh-token');
 
-// Returns a promise which resolves to the response from the Spotify API
-spotifyAuthentication.refreshAccessToken()
-    .then(console.log, console.error);
 ```
 
 ## Alternatives

@@ -99,11 +99,11 @@ class SpotifyOAuth2 {
         return getTokenRequest(this, body);
     }
 
-    refreshAccessToken() {
+    refreshAccessToken(refreshToken) {
         const body = {};
 
         // Mandatory parameters
-        body.refresh_token = this.refreshToken;
+        body.refresh_token = refreshToken || this.refreshToken;
         body.grant_type = 'refresh_token';
 
         return getTokenRequest(this, body);
