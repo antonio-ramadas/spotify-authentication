@@ -2,7 +2,7 @@
 
 npm package to do the **Authorization Code Flow** with the Spotify API. This package solely focuses on authentication and not on the Spotify Web API. You get an abstraction layer to build and make the authentication requests for you. Besides:
  - 1 single file encapsulating all the logic
- - Small size (±4KB)
+ - Small size (±3KB)
  - No third party dependencies (in fact, no need to do `npm install` to run this repo directly!)
  
 ## Installation
