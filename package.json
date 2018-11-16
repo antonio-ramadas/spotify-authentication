@@ -1,6 +1,6 @@
 {
     "name": "spotify-authentication",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "author": "António Ramadas",
     "license": "MIT",
     "description": "npm package to do the Authorization Code Flow with the Spotify API",
